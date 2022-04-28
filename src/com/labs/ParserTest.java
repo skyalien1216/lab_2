@@ -14,7 +14,7 @@ class ParserTest {
         String expressionText = "-x-1-3*(-1 - (5 * 1 - 4)) * -x";
         Parser parser = new Parser();
         parser.setExpressionText(expressionText);
-        parser.setVariableValues('x', 1);
+        parser.setVariableValues("x", 1);
         assertEquals(-8,  parser.evaluate());
     }
 
@@ -23,8 +23,8 @@ class ParserTest {
         String expressionText = "x - y * 2 + y * ( x * y)";
         Parser parser = new Parser();
         parser.setExpressionText(expressionText);
-        parser.setVariableValues('x', 5);
-        parser.setVariableValues('y', 2);
+        parser.setVariableValues("x", 5);
+        parser.setVariableValues("y", 2);
         assertEquals(21,  parser.evaluate());
     }
 
@@ -46,10 +46,10 @@ class ParserTest {
 
     @Test
     void evaluateFuncExpression() {
-        String expressionText = "cos(-x * (sin(p/2) - 1)) * sqrt(abs(-5)*5 + 25 - x)";
+        String expressionText = "cos(-x * (sin(pi/2) - 1)) * sqrt(abs(-5)*5 + 25 - x)";
         Parser parser = new Parser();
         parser.setExpressionText(expressionText);
-        parser.setVariableValues('x', 1);
+        parser.setVariableValues("x", 1);
         assertEquals(7,  parser.evaluate());
     }
 
@@ -58,16 +58,16 @@ class ParserTest {
         String expressionText = "-1 * 3/(12 + 3)*e";
         Parser parser = new Parser();
         parser.setExpressionText(expressionText);
-        List<Parser.Lexeme> test = new ArrayList<Parser.Lexeme>();
+        List<Parser.Lexeme> test = new ArrayList<>();
         test.add(new Parser.Lexeme(Parser.LexemeType.SUBTRACTION, '-'));
-        test.add(new Parser.Lexeme(Parser.LexemeType.NUMBER, '1'));
+        test.add(new Parser.Lexeme(Parser.LexemeType.NUMBER, "1.0"));
         test.add(new Parser.Lexeme(Parser.LexemeType.MULTIPLICATION, '*'));
-        test.add(new Parser.Lexeme(Parser.LexemeType.NUMBER, '3'));
+        test.add(new Parser.Lexeme(Parser.LexemeType.NUMBER, "3.0"));
         test.add(new Parser.Lexeme(Parser.LexemeType.DIVISION, '/'));
         test.add(new Parser.Lexeme(Parser.LexemeType.LEFT_BRACKET, '('));
-        test.add(new Parser.Lexeme(Parser.LexemeType.NUMBER, "12"));
+        test.add(new Parser.Lexeme(Parser.LexemeType.NUMBER, "12.0"));
         test.add(new Parser.Lexeme(Parser.LexemeType.ADDITION, '+'));
-        test.add(new Parser.Lexeme(Parser.LexemeType.NUMBER, '3'));
+        test.add(new Parser.Lexeme(Parser.LexemeType.NUMBER, "3.0"));
         test.add(new Parser.Lexeme(Parser.LexemeType.RIGHT_BRACKET, ')'));
         test.add(new Parser.Lexeme(Parser.LexemeType.MULTIPLICATION, '*'));
         test.add(new Parser.Lexeme(Parser.LexemeType.VARIABLE, 'e'));

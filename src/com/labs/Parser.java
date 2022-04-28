@@ -12,14 +12,14 @@ public class Parser {
 
     private String expressionText;
     private List<String> funcValues;
-    private Map<Character,Double> variableValues ;
+    private Map<String,Double> variableValues ;
 
     public Parser() {
         this.funcValues = Arrays.asList("sin", "sinh", "cos", "cosh",
                 "tan", "tanh", "ctg", "sec", "cosec", "abs", "ln", "lg", "sqrt");
-        this.variableValues = new HashMap<Character, Double>();
-        variableValues.put('p',Math.PI);
-        variableValues.put('e', Math.E);
+        this.variableValues = new HashMap<>();
+        variableValues.put("pi",Math.PI);
+        variableValues.put("e", Math.E);
     }
 
     /**
@@ -27,7 +27,7 @@ public class Parser {
      * @param c - name of the variable, 1 letter
      * @param num - value of the variable
      */
-    public void setVariableValues(Character c, double num){
+    public void setVariableValues(String c, double num){
         if(variableValues.containsKey(c))
             variableValues.put(c, num);
     }
@@ -41,9 +41,9 @@ public class Parser {
      * @param expressionText - mathematical expression for parsing
      */
     public void setExpressionText(String expressionText) {
-        variableValues.put('x', null);
-        variableValues.put('y', null);
-        variableValues.put('z', null);
+        variableValues.put("x", null);
+        variableValues.put("y", null);
+        variableValues.put("z", null);
         this.expressionText = expressionText;
     }
 
@@ -166,7 +166,15 @@ public class Parser {
                     continue;
                 default:
                     if (c <= '9' && c >= '0') {
-                        StringBuilder sb = new StringBuilder();
+                        int dot_cnt = 0, startPos = pos;
+                        while (pos < expText.length() && (Character.isDigit(expText.charAt(pos)) || expText.charAt(pos) == '.')) {
+                            if (expText.charAt(pos) == '.' && ++dot_cnt > 1) {
+                                throw new NumberFormatException("Error: number not valid at position " + pos);
+                            }
+                            pos++;
+                        }
+                        double num = Double.parseDouble(expText.substring(startPos, pos));
+                        /*StringBuilder sb = new StringBuilder();
                         do {
                             sb.append(c);
                             pos++;
@@ -174,41 +182,57 @@ public class Parser {
                                 break;
                             }
                             c = expText.charAt(pos);
-                        } while (c <= '9' && c >= '0');
-                        lexemes.add(new Lexeme(LexemeType.NUMBER, sb.toString()));
+                        } while (c <= '9' && c >= '0');*/
+                        lexemes.add(new Lexeme(LexemeType.NUMBER, String.valueOf(num) ));//sb.toString()
                     } else {
-                        if(variableValues.containsKey(c))
-                        {
-                            if (variableValues.get(c) == null){
-                                System.out.println("Enter the value of your variable " + c);
-                                Scanner in = new Scanner(System.in);
-                                int variable = in.nextInt();
-                                variableValues.put( c, (double) variable);
-                            }
-                            lexemes.add(new Lexeme(LexemeType.VARIABLE, c));
-                        }
-                        else if (c != ' ') {
-                            String funcName = "" + c;
-                            while(pos < expText.length())
+                         if (c != ' ') {
+                             String str = "" + c;
+                             if(variableValues.containsKey(str)) {
+                                 if (variableValues.get(str) == null) {
+                                     System.out.println("Enter the value of your variable " + c);
+                                     Scanner in = new Scanner(System.in);
+                                     int variable = in.nextInt();
+                                     variableValues.put(str, (double) variable);
+                                 }
+                                 lexemes.add(new Lexeme(LexemeType.VARIABLE, str));
+                                 str = "";
+                                 pos++;
+                                 break;
+                             }
+                            while(pos + 1 < expText.length())
                             {
                                 pos++;
                                 char newC = expText.charAt(pos);
-                                if(newC == '(' && !funcName.equals("" + c))
+                                if(newC == '(')
                                 {
-                                    lexemes.add(new Lexeme(LexemeType.FUNCTION, funcName));
+                                    lexemes.add(new Lexeme(LexemeType.FUNCTION, str));
                                     pos--;
+                                    str = "";
                                     break;
                                 }
-                                else if (newC == '(' && funcName.equals("" + c))
-                                    throw new RuntimeException("Unexpected character at position " + pos);
                                 else
-                                {
                                     if (Character.isAlphabetic(newC))
-                                        funcName += newC;
+                                        str += newC;
                                     else
-                                        throw new RuntimeException("Unexpected character: " + c);
+                                    {
+                                        pos--;
+                                        break;
+                                    }
+
+                                if(variableValues.containsKey(str))
+                                {
+                                    if (variableValues.get(str) == null){
+                                        System.out.println("Enter the value of your variable " + c);
+                                        Scanner in = new Scanner(System.in);
+                                        int variable = in.nextInt();
+                                        variableValues.put( str, (double) variable);
+                                    }
+                                    lexemes.add(new Lexeme(LexemeType.VARIABLE, str));
+                                    str = "";
                                 }
                             }
+                            if (str.length() != 0)
+                                throw new RuntimeException("Error: something went wrong!");
                         }
                         pos++;
                     }
@@ -324,8 +348,25 @@ public class Parser {
             case "sqrt":
                 return Math.sqrt(num);
             default:
-                throw new RuntimeException("function '" + func + "' is not defined");
+                return userFunction(func, num);
         }
+    }
+
+    /**
+     * Evaluates user made function
+     * @param f name of the function
+     * @param num parameter
+     * @return value of the function
+     */
+    private double userFunction(String f, double num)
+    {
+        System.out.println("Введите действия производимые функцией '" + f + "(x)'");
+        Scanner in = new Scanner(System.in);
+        String exp = in.nextLine();
+
+        List<Lexeme> lex = addLexemes(exp.replace("x", String.valueOf(num)));
+        LexemeBuffer lb = new LexemeBuffer(lex);
+        return expr(lb);
     }
 
     /**
@@ -337,10 +378,10 @@ public class Parser {
         Lexeme lexeme = lexemes.next();
         switch (lexeme.type) {
             case NUMBER:
-             return Integer.parseInt(lexeme.value);
+             return Double.parseDouble(lexeme.value);
             case VARIABLE:
-                if (variableValues.containsKey(lexeme.value.charAt(0)))
-                    return variableValues.get(lexeme.value.charAt(0));
+                if (variableValues.containsKey(lexeme.value))
+                    return variableValues.get(lexeme.value);
                 throw new RuntimeException("Unexpected token: " + lexeme.value
                         + " at position: " + lexemes.getPos() + " VARIABLE DOESN'T EXIST");
             case LEFT_BRACKET:
